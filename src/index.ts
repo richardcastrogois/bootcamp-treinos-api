@@ -32,7 +32,7 @@ await app.register(fastifySwagger, {
     servers: [
       {
         description: "Localhost",
-        url: "http://localhost:8081",
+        url: "http://localhost:8080",
       },
     ],
   },
