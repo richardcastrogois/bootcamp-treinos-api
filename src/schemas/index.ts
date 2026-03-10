@@ -33,7 +33,7 @@ export const StatsSchema = z.object({
     z.object({
       workoutDayCompleted: z.boolean(),
       workoutDayStarted: z.boolean(),
-    }),
+    })
   ),
   completedWorkoutsCount: z.number(),
   conclusionRate: z.number(),
@@ -58,7 +58,7 @@ export const HomeDataSchema = z.object({
     z.object({
       workoutDayCompleted: z.boolean(),
       workoutDayStarted: z.boolean(),
-    }),
+    })
   ),
 });
 
@@ -78,7 +78,7 @@ export const GetWorkoutDaySchema = z.object({
       sets: z.number(),
       reps: z.number(),
       restTimeInSeconds: z.number(),
-    }),
+    })
   ),
   sessions: z.array(
     z.object({
@@ -86,7 +86,7 @@ export const GetWorkoutDaySchema = z.object({
       workoutDayId: z.uuid(),
       startedAt: z.iso.date().optional(),
       completedAt: z.iso.date().optional(),
-    }),
+    })
   ),
 });
 
@@ -102,7 +102,7 @@ export const GetWorkoutPlanSchema = z.object({
       coverImageUrl: z.url().optional(),
       estimatedDurationInSeconds: z.number(),
       exercisesCount: z.number(),
-    }),
+    })
   ),
 });
 
@@ -134,12 +134,36 @@ export const ListWorkoutPlansSchema = z.array(
             sets: z.number(),
             reps: z.number(),
             restTimeInSeconds: z.number(),
-          }),
+          })
         ),
-      }),
+      })
     ),
-  }),
+  })
 );
+
+export const UpsertUserTrainDataBodySchema = z.object({
+  weightInGrams: z.number().min(0),
+  heightInCentimeters: z.number().min(0),
+  age: z.number().min(0),
+  bodyFatPercentage: z.number().min(0).max(100),
+});
+
+export const UserTrainDataSchema = z.object({
+  userId: z.string(),
+  userName: z.string(),
+  weightInGrams: z.number(),
+  heightInCentimeters: z.number(),
+  age: z.number(),
+  bodyFatPercentage: z.number().min(0).max(100),
+});
+
+export const UpsertUserTrainDataSchema = z.object({
+  userId: z.string(),
+  weightInGrams: z.number(),
+  heightInCentimeters: z.number(),
+  age: z.number(),
+  bodyFatPercentage: z.number(),
+});
 
 export const WorkoutPlanSchema = z.object({
   id: z.uuid(),
