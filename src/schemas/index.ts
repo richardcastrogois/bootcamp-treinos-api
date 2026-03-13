@@ -34,7 +34,7 @@ export const StatsSchema = z.object({
     z.object({
       workoutDayCompleted: z.boolean(),
       workoutDayStarted: z.boolean(),
-    })
+    }),
   ),
   completedWorkoutsCount: z.number(),
   conclusionRate: z.number(),
@@ -81,7 +81,7 @@ export const GetWorkoutDaySchema = z.object({
       sets: z.number(),
       reps: z.number(),
       restTimeInSeconds: z.number(),
-    })
+    }),
   ),
   sessions: z.array(
     z.object({
@@ -89,7 +89,7 @@ export const GetWorkoutDaySchema = z.object({
       workoutDayId: z.uuid(),
       startedAt: z.iso.date().optional(),
       completedAt: z.iso.date().optional(),
-    })
+    }),
   ),
 });
 
@@ -105,7 +105,7 @@ export const GetWorkoutPlanSchema = z.object({
       coverImageUrl: z.url().optional(),
       estimatedDurationInSeconds: z.number(),
       exercisesCount: z.number(),
-    })
+    }),
   ),
 });
 
@@ -137,11 +137,11 @@ export const ListWorkoutPlansSchema = z.array(
             sets: z.number(),
             reps: z.number(),
             restTimeInSeconds: z.number(),
-          })
+          }),
         ),
-      })
+      }),
     ),
-  })
+  }),
 );
 
 export const UpsertUserTrainDataBodySchema = z.object({
@@ -189,4 +189,15 @@ export const WorkoutPlanSchema = z.object({
       ),
     }),
   ),
+});
+
+export const BootstrapSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    image: z.string().nullable().optional(),
+  }),
+  homeData: HomeDataSchema,
+  trainData: UserTrainDataSchema.nullable(),
 });

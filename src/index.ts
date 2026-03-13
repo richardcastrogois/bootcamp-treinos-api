@@ -1,4 +1,3 @@
-//backend/src/index.ts
 import "dotenv/config";
 
 import { fastifyCors } from "@fastify/cors";
@@ -16,6 +15,7 @@ import { z } from "zod";
 import { auth } from "./lib/auth.js";
 import { env } from "./lib/env.js";
 import { aiRoutes } from "./routes/ai.js";
+import { bootstrapRoutes } from "./routes/bootstrap.js";
 import { homeRoutes } from "./routes/home.js";
 import { meRoutes } from "./routes/me.js";
 import { statsRoutes } from "./routes/stats.js";
@@ -82,8 +82,7 @@ await app.register(fastifyApiReference, {
   },
 });
 
-// RESTful
-// Routes
+await app.register(bootstrapRoutes, { prefix: "/bootstrap" });
 await app.register(homeRoutes, { prefix: "/home" });
 await app.register(meRoutes, { prefix: "/me" });
 await app.register(statsRoutes, { prefix: "/stats" });
@@ -128,23 +127,21 @@ app.route({
   },
   async handler(request, reply) {
     try {
-      // Construct request URL
       const url = new URL(request.url, `http://${request.headers.host}`);
 
-      // Convert Fastify headers to standard Headers object
       const headers = new Headers();
       Object.entries(request.headers).forEach(([key, value]) => {
         if (value) headers.append(key, value.toString());
       });
-      // Create Fetch API-compatible request
+
       const req = new Request(url.toString(), {
         method: request.method,
         headers,
         ...(request.body ? { body: JSON.stringify(request.body) } : {}),
       });
-      // Process authentication request
+
       const response = await auth.handler(req);
-      // Forward response to client
+
       reply.status(response.status);
       response.headers.forEach((value, key) => reply.header(key, value));
       reply.send(response.body ? await response.text() : null);
