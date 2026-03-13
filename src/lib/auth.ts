@@ -6,6 +6,7 @@ import { prisma } from "./db.js";
 import { env } from "./env.js";
 
 export const auth = betterAuth({
+  secret: env.BETTER_AUTH_SECRET,
   baseURL: env.API_BASE_URL,
   trustedOrigins: [env.WEB_APP_BASE_URL],
   socialProviders: {
@@ -22,7 +23,7 @@ export const auth = betterAuth({
   advanced: {
     crossSubDomainCookies: {
       enabled: true,
-      domain:
+      domain: 
         env.NODE_ENV === "production" ? ".rcg-tech.com.br" : undefined,
     },
   },

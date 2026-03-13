@@ -1,3 +1,4 @@
+//backend/src/usecases/GetWorkoutPlan.ts
 import { NotFoundError } from "../errors/index.js";
 import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";

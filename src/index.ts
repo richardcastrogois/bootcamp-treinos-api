@@ -1,3 +1,4 @@
+//backend/src/index.ts
 import "dotenv/config";
 
 import { fastifyCors } from "@fastify/cors";

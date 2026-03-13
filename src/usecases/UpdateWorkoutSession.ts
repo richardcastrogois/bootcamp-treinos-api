@@ -1,3 +1,4 @@
+//backend/src/usecases/UpdateWorkoutSession.ts
 import { NotFoundError } from "../errors/index.js";
 import { prisma } from "../lib/db.js";
 
