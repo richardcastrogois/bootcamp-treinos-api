@@ -1,3 +1,4 @@
+//backend/src/routes/bootstrap.ts
 import { fromNodeHeaders } from "better-auth/node";
 import dayjs from "dayjs";
 import { FastifyInstance } from "fastify";
