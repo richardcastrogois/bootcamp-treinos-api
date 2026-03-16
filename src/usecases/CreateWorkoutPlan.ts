@@ -3,7 +3,6 @@ import { NotFoundError } from "../errors/index.js";
 import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
 
-// Data Transfer Object
 interface InputDto {
   userId: string;
   name: string;
@@ -44,19 +43,21 @@ interface OutputDto {
 
 export class CreateWorkoutPlan {
   async execute(dto: InputDto): Promise<OutputDto> {
-    const existingWorkoutPlan = await prisma.workoutPlan.findFirst({
-      where: {
-        isActive: true,
-      },
-    });
-    // Transaction - Atomicidade
     return prisma.$transaction(async (tx) => {
+      const existingWorkoutPlan = await tx.workoutPlan.findFirst({
+        where: {
+          userId: dto.userId,
+          isActive: true,
+        },
+      });
+
       if (existingWorkoutPlan) {
         await tx.workoutPlan.update({
           where: { id: existingWorkoutPlan.id },
           data: { isActive: false },
         });
       }
+
       const workoutPlan = await tx.workoutPlan.create({
         data: {
           id: crypto.randomUUID(),
@@ -83,6 +84,7 @@ export class CreateWorkoutPlan {
           },
         },
       });
+
       const result = await tx.workoutPlan.findUnique({
         where: { id: workoutPlan.id },
         include: {
@@ -93,9 +95,11 @@ export class CreateWorkoutPlan {
           },
         },
       });
+
       if (!result) {
         throw new NotFoundError("Workout plan not found");
       }
+
       return {
         id: result.id,
         name: result.name,

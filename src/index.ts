@@ -19,6 +19,11 @@ import { aiRoutes } from "./routes/ai.js";
 import { bootstrapRoutes } from "./routes/bootstrap.js";
 import { homeRoutes } from "./routes/home.js";
 import { meRoutes } from "./routes/me.js";
+import { mobileAuthRoutes } from "./routes/mobile-auth.js";
+import { mobileHomeRoutes } from "./routes/mobile-home.js";
+import { mobileProfileRoutes } from "./routes/mobile-profile.js";
+import { mobileStatsRoutes } from "./routes/mobile-stats.js";
+import { mobileWorkoutPlanRoutes } from "./routes/mobile-workout-plans.js";
 import { statsRoutes } from "./routes/stats.js";
 import { workoutPlanRoutes } from "./routes/workout-plan.js";
 
@@ -61,7 +66,29 @@ await app.register(fastifySwagger, {
 });
 
 await app.register(fastifyCors, {
-  origin: [env.WEB_APP_BASE_URL],
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const allowedOrigins = [
+      env.WEB_APP_BASE_URL,
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+    ];
+
+    const isFlutterWebLocalhost =
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:");
+
+    if (allowedOrigins.includes(origin) || isFlutterWebLocalhost) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"), false);
+  },
   credentials: true,
 });
 
@@ -89,6 +116,13 @@ await app.register(meRoutes, { prefix: "/me" });
 await app.register(statsRoutes, { prefix: "/stats" });
 await app.register(workoutPlanRoutes, { prefix: "/workout-plans" });
 await app.register(aiRoutes, { prefix: "/ai" });
+await app.register(mobileAuthRoutes, { prefix: "/mobile-auth" });
+await app.register(mobileHomeRoutes, { prefix: "/mobile/home" });
+await app.register(mobileProfileRoutes, { prefix: "/mobile/profile" });
+await app.register(mobileStatsRoutes, { prefix: "/mobile/stats" });
+await app.register(mobileWorkoutPlanRoutes, {
+  prefix: "/mobile/workout-plans",
+});
 
 app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",

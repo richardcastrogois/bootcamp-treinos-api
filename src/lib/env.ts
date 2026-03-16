@@ -13,6 +13,8 @@ const envSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
   OPENAI_API_KEY: z.string().optional(),
   WEB_APP_BASE_URL: z.url().default("http://localhost:3000"),
+  MOBILE_GOOGLE_CLIENT_IDS: z.string(),
+  MOBILE_JWT_SECRET: z.string(),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),

@@ -35,20 +35,23 @@ export class StartWorkoutSession {
     }
 
     const workoutDay = await prisma.workoutDay.findUnique({
-      where: { id: dto.workoutDayId, workoutPlanId: dto.workoutPlanId },
+      where: { id: dto.workoutDayId },
     });
 
-    if (!workoutDay) {
+    if (!workoutDay || workoutDay.workoutPlanId !== dto.workoutPlanId) {
       throw new NotFoundError("Workout day not found");
     }
 
-    const existingSession = await prisma.workoutSession.findFirst({
-      where: { workoutDayId: dto.workoutDayId },
+    const existingOpenSession = await prisma.workoutSession.findFirst({
+      where: {
+        workoutDayId: dto.workoutDayId,
+        completeAt: null,
+      },
     });
 
-    if (existingSession) {
+    if (existingOpenSession) {
       throw new SessionAlreadyStartedError(
-        "A session has already been started for this day",
+        "A session is already open for this workout day",
       );
     }
 
