@@ -1,4 +1,5 @@
 //backend/src/usecases/UpsertUserTrainData.ts
+import { InvalidUserTrainDataError } from "../errors/index.js";
 import { prisma } from "../lib/db.js";
 
 interface InputDto {
@@ -17,8 +18,43 @@ interface OutputDto {
   bodyFatPercentage: number;
 }
 
+function assertValidTrainData(dto: InputDto) {
+  if (!Number.isInteger(dto.weightInGrams) || dto.weightInGrams < 1) {
+    throw new InvalidUserTrainDataError(
+      "weightInGrams must be an integer greater than 0",
+    );
+  }
+
+  if (
+    !Number.isInteger(dto.heightInCentimeters) ||
+    dto.heightInCentimeters < 1
+  ) {
+    throw new InvalidUserTrainDataError(
+      "heightInCentimeters must be an integer greater than 0",
+    );
+  }
+
+  if (!Number.isInteger(dto.age) || dto.age < 1) {
+    throw new InvalidUserTrainDataError(
+      "age must be an integer greater than 0",
+    );
+  }
+
+  if (
+    !Number.isInteger(dto.bodyFatPercentage) ||
+    dto.bodyFatPercentage < 0 ||
+    dto.bodyFatPercentage > 100
+  ) {
+    throw new InvalidUserTrainDataError(
+      "bodyFatPercentage must be an integer between 0 and 100",
+    );
+  }
+}
+
 export class UpsertUserTrainData {
   async execute(dto: InputDto): Promise<OutputDto> {
+    assertValidTrainData(dto);
+
     const user = await prisma.user.update({
       where: { id: dto.userId },
       data: {

@@ -3,6 +3,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 
+import { InvalidUserTrainDataError } from "../errors/index.js";
 import { auth } from "../lib/auth.js";
 import {
   ErrorSchema,
@@ -32,6 +33,7 @@ export const meRoutes = async (app: FastifyInstance) => {
         const session = await auth.api.getSession({
           headers: fromNodeHeaders(request.headers),
         });
+
         if (!session) {
           return reply.status(401).send({
             error: "Unauthorized",
@@ -47,6 +49,7 @@ export const meRoutes = async (app: FastifyInstance) => {
         return reply.status(200).send(result);
       } catch (error) {
         app.log.error(error);
+
         return reply.status(500).send({
           error: "Internal server error",
           code: "INTERNAL_SERVER_ERROR",
@@ -66,6 +69,7 @@ export const meRoutes = async (app: FastifyInstance) => {
       response: {
         200: UpsertUserTrainDataSchema,
         401: ErrorSchema,
+        422: ErrorSchema,
         500: ErrorSchema,
       },
     },
@@ -74,6 +78,7 @@ export const meRoutes = async (app: FastifyInstance) => {
         const session = await auth.api.getSession({
           headers: fromNodeHeaders(request.headers),
         });
+
         if (!session) {
           return reply.status(401).send({
             error: "Unauthorized",
@@ -93,6 +98,14 @@ export const meRoutes = async (app: FastifyInstance) => {
         return reply.status(200).send(result);
       } catch (error) {
         app.log.error(error);
+
+        if (error instanceof InvalidUserTrainDataError) {
+          return reply.status(422).send({
+            error: error.message,
+            code: "INVALID_USER_TRAIN_DATA_ERROR",
+          });
+        }
+
         return reply.status(500).send({
           error: "Internal server error",
           code: "INTERNAL_SERVER_ERROR",

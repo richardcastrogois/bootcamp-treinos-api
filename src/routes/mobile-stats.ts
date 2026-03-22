@@ -2,7 +2,7 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 
-import { NotFoundError } from "../errors/index.js";
+import { InvalidDateRangeError, NotFoundError } from "../errors/index.js";
 import { getMobileUserFromAuthorizationHeader } from "../lib/get-mobile-user.js";
 import {
   ErrorSchema,
@@ -23,6 +23,7 @@ export const mobileStatsRoutes = async (app: FastifyInstance) => {
         200: StatsSchema,
         401: ErrorSchema,
         404: ErrorSchema,
+        422: ErrorSchema,
         500: ErrorSchema,
       },
     },
@@ -49,6 +50,13 @@ export const mobileStatsRoutes = async (app: FastifyInstance) => {
         return reply.status(200).send(result);
       } catch (error) {
         app.log.error(error);
+
+        if (error instanceof InvalidDateRangeError) {
+          return reply.status(422).send({
+            error: error.message,
+            code: "INVALID_DATE_RANGE_ERROR",
+          });
+        }
 
         if (error instanceof NotFoundError) {
           return reply.status(404).send({

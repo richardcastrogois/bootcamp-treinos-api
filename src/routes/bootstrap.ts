@@ -1,6 +1,7 @@
 //backend/src/routes/bootstrap.ts
 import { fromNodeHeaders } from "better-auth/node";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 
@@ -8,6 +9,8 @@ import { auth } from "../lib/auth.js";
 import { BootstrapSchema, ErrorSchema } from "../schemas/index.js";
 import { GetHomeData } from "../usecases/GetHomeData.js";
 import { GetUserTrainData } from "../usecases/GetUserTrainData.js";
+
+dayjs.extend(utc);
 
 export const bootstrapRoutes = async (app: FastifyInstance) => {
   app.withTypeProvider<ZodTypeProvider>().route({
@@ -36,7 +39,7 @@ export const bootstrapRoutes = async (app: FastifyInstance) => {
           });
         }
 
-        const today = dayjs().format("YYYY-MM-DD");
+        const today = dayjs.utc().format("YYYY-MM-DD");
 
         const getHomeData = new GetHomeData();
         const getUserTrainData = new GetUserTrainData();

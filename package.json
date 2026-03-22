@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
-    "build": "pnpm exec prisma generate && tsc"
+    "build": "pnpm exec prisma generate && tsc",
+    "start": "node dist/index.js"
   },
   "engines": {
     "node": "24"
@@ -32,6 +33,7 @@
     "@ai-sdk/google": "3.0.34",
     "@ai-sdk/openai": "3.0.33",
     "@fastify/cors": "11.2.0",
+    "@fastify/rate-limit": "10.3.0",
     "@fastify/swagger": "9.7.0",
     "@prisma/adapter-pg": "7.4.0",
     "@prisma/client": "7.4.0",

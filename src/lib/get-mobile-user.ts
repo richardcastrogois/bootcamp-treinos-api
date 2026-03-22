@@ -5,11 +5,15 @@ import { verifyMobileAppToken } from "./mobile-auth.js";
 export async function getMobileUserFromAuthorizationHeader(
   authorization?: string,
 ) {
-  if (!authorization?.startsWith("Bearer ")) {
+  if (!authorization) {
     return null;
   }
 
-  const token = authorization.replace("Bearer ", "").trim();
+  const [scheme, token] = authorization.trim().split(/\s+/);
+
+  if (scheme !== "Bearer" || !token) {
+    return null;
+  }
 
   try {
     const payload = verifyMobileAppToken(token);

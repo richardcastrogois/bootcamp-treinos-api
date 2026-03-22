@@ -1,5 +1,10 @@
 //backend/src/usecases/UpdateWorkoutSession.ts
-import { NotFoundError } from "../errors/index.js";
+import {
+  InvalidWorkoutSessionCompletionError,
+  NotFoundError,
+  WorkoutSessionAlreadyCompletedError,
+} from "../errors/index.js";
+import { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../lib/db.js";
 
 interface InputDto {
@@ -16,41 +21,102 @@ interface OutputDto {
   completedAt: string;
 }
 
+function parseCompletedAt(value: string) {
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    throw new InvalidWorkoutSessionCompletionError(
+      "completedAt must be a valid ISO datetime",
+    );
+  }
+
+  return parsedDate;
+}
+
 export class UpdateWorkoutSession {
   async execute(dto: InputDto): Promise<OutputDto> {
-    const workoutPlan = await prisma.workoutPlan.findUnique({
-      where: { id: dto.workoutPlanId },
-    });
+    const completedAt = parseCompletedAt(dto.completedAt);
 
-    if (!workoutPlan || workoutPlan.userId !== dto.userId) {
-      throw new NotFoundError("Workout plan not found");
-    }
+    return prisma.$transaction(
+      async (tx) => {
+        const workoutPlan = await tx.workoutPlan.findUnique({
+          where: { id: dto.workoutPlanId },
+        });
 
-    const workoutDay = await prisma.workoutDay.findUnique({
-      where: { id: dto.workoutDayId, workoutPlanId: dto.workoutPlanId },
-    });
+        if (!workoutPlan || workoutPlan.userId !== dto.userId) {
+          throw new NotFoundError("Workout plan not found");
+        }
 
-    if (!workoutDay) {
-      throw new NotFoundError("Workout day not found");
-    }
+        const workoutDay = await tx.workoutDay.findFirst({
+          where: {
+            id: dto.workoutDayId,
+            workoutPlanId: dto.workoutPlanId,
+          },
+        });
 
-    const session = await prisma.workoutSession.findUnique({
-      where: { id: dto.sessionId, workoutDayId: dto.workoutDayId },
-    });
+        if (!workoutDay) {
+          throw new NotFoundError("Workout day not found");
+        }
 
-    if (!session) {
-      throw new NotFoundError("Workout session not found");
-    }
+        await tx.$queryRaw`
+          SELECT id
+          FROM "WorkoutSession"
+          WHERE id = ${dto.sessionId}
+          FOR UPDATE
+        `;
 
-    const updatedSession = await prisma.workoutSession.update({
-      where: { id: dto.sessionId },
-      data: { completeAt: new Date(dto.completedAt) },
-    });
+        const session = await tx.workoutSession.findFirst({
+          where: {
+            id: dto.sessionId,
+            workoutDayId: dto.workoutDayId,
+          },
+        });
 
-    return {
-      id: updatedSession.id,
-      startedAt: updatedSession.startedAt.toISOString(),
-      completedAt: updatedSession.completeAt!.toISOString(),
-    };
+        if (!session) {
+          throw new NotFoundError("Workout session not found");
+        }
+
+        if (!session.startedAt) {
+          throw new InvalidWorkoutSessionCompletionError(
+            "Session must be started before completion",
+          );
+        }
+
+        if (session.completeAt) {
+          throw new WorkoutSessionAlreadyCompletedError(
+            "Workout session has already been completed",
+          );
+        }
+
+        if (completedAt.getTime() < session.startedAt.getTime()) {
+          throw new InvalidWorkoutSessionCompletionError(
+            "completedAt cannot be earlier than startedAt",
+          );
+        }
+
+        const now = new Date();
+        const fiveMinutesInMs = 5 * 60 * 1000;
+
+        if (completedAt.getTime() > now.getTime() + fiveMinutesInMs) {
+          throw new InvalidWorkoutSessionCompletionError(
+            "completedAt cannot be too far in the future",
+          );
+        }
+
+        const updatedSession = await tx.workoutSession.update({
+          where: { id: dto.sessionId },
+          data: { completeAt: completedAt },
+        });
+
+        return {
+          id: updatedSession.id,
+          startedAt: updatedSession.startedAt.toISOString(),
+          completedAt: updatedSession.completeAt!.toISOString(),
+        };
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      },
+    );
   }
 }

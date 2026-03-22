@@ -6,10 +6,14 @@ import { openAPI } from "better-auth/plugins";
 import { prisma } from "./db.js";
 import { env } from "./env.js";
 
+const trustedOrigins = Array.from(
+  new Set([env.WEB_APP_BASE_URL, ...env.TRUSTED_ORIGINS_LIST]),
+);
+
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.API_BASE_URL,
-  trustedOrigins: [env.WEB_APP_BASE_URL],
+  trustedOrigins,
   socialProviders: {
     google: {
       prompt: "select_account",
@@ -22,10 +26,13 @@ export const auth = betterAuth({
   }),
   plugins: [openAPI()],
   advanced: {
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: 
-        env.NODE_ENV === "production" ? ".rcg-tech.com.br" : undefined,
-    },
+    crossSubDomainCookies: env.COOKIE_DOMAIN
+      ? {
+          enabled: true,
+          domain: env.COOKIE_DOMAIN,
+        }
+      : {
+          enabled: false,
+        },
   },
 });

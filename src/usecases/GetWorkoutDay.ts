@@ -1,12 +1,7 @@
 //backend/src/usecases/GetWorkoutDay.ts
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc.js";
-
 import { NotFoundError } from "../errors/index.js";
 import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
-
-dayjs.extend(utc);
 
 interface InputDto {
   userId: string;
@@ -42,17 +37,28 @@ export class GetWorkoutDay {
   async execute(dto: InputDto): Promise<OutputDto> {
     const workoutPlan = await prisma.workoutPlan.findUnique({
       where: { id: dto.workoutPlanId },
+      select: {
+        id: true,
+        userId: true,
+      },
     });
 
     if (!workoutPlan || workoutPlan.userId !== dto.userId) {
       throw new NotFoundError("Workout plan not found");
     }
 
-    const workoutDay = await prisma.workoutDay.findUnique({
-      where: { id: dto.workoutDayId, workoutPlanId: dto.workoutPlanId },
+    const workoutDay = await prisma.workoutDay.findFirst({
+      where: {
+        id: dto.workoutDayId,
+        workoutPlanId: dto.workoutPlanId,
+      },
       include: {
-        exercises: { orderBy: { order: "asc" } },
-        sessions: true,
+        exercises: {
+          orderBy: { order: "asc" },
+        },
+        sessions: {
+          orderBy: { startedAt: "desc" },
+        },
       },
     });
 
@@ -79,9 +85,9 @@ export class GetWorkoutDay {
       sessions: workoutDay.sessions.map((session) => ({
         id: session.id,
         workoutDayId: session.workoutDayId,
-        startedAt: dayjs.utc(session.startedAt).format("YYYY-MM-DD"),
+        startedAt: session.startedAt.toISOString(),
         completedAt: session.completeAt
-          ? dayjs.utc(session.completeAt).format("YYYY-MM-DD")
+          ? session.completeAt.toISOString()
           : undefined,
       })),
     };
